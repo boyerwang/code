@@ -99,7 +99,7 @@ public class TUser implements Serializable {
 				per1.getChildren().clear();
 				// 装载一级菜单下的二级菜单
 				for (TPermission per2 : permissions) {
-					// 一级菜单的id等于二级菜单的pid
+					// 一级菜单的id等于二级菜单的pid11
 					if (per1.getId() == per2.getPid()) {
 						per1.getChildren().add(per2);
 					}
