@@ -95,7 +95,7 @@ public class TUser implements Serializable {
 		for (TPermission per1 : permissions) {
 			// 一级菜单
 			if (per1.getPid() == 0) {
-				// 清空
+				// 清空1111
 				per1.getChildren().clear();
 				// 装载一级菜单下的二级菜单
 				for (TPermission per2 : permissions) {
