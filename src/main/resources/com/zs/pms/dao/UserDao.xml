@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zs.pms.dao.UserDao">
+	<!-- 关联映射 -->
+	<resultMap type="TUser" id="usermap">
+	<!-- 主键 -->
+	<id column="id"  property="id"/>
+		<!-- 一对一关联 property：属性名 column：关联字段名 执行完sql返回的对象给dept赋值 -->
+		<association property="dept" column="dept" select="getDept" />
+		<!-- 一对一多联 property：属性名 column：关联字段名 执行完sql返回的对象给dept赋值 -->
+		<collection property="permissions" column="id" select="getPermissions"
+			ofType="TPermission" />
+	</resultMap>
+	<!-- 只关联部门 -->
+	<resultMap type="TUser" id="usermap2">
+		<!-- 一对一关联 property：属性名 column：关联字段名 执行完sql返回的对象给dept赋值 -->
+		<association property="dept" column="dept" select="getDept" />
+	
+	</resultMap>
+	<!-- 根据用户id获取权限列表 -->
+	<select id="getPermissions" parameterType="int" resultType="TPermission">
+		select * from tpermission where id in (select pid from trolepermission
+		where rid in (select rid from tuserrole where usid=#{id}))
+
+	</select>
+	<!-- 关联执行sql取部门 -->
+	<select id="getDept" parameterType="int" resultType="TDep">
+		select *
+		from tdep where id =#{dept}
+	</select>
+	<!-- 正常返回  -->
+	<select id="queryByCon" parameterType="QueryUser" resultType="TUser">
+		<!--  调用sql片段  -->
+		<include refid="selector" />
+		<include refid="where" />
+		<include refid="order" />
+	</select>
+	<!--  分页查询  -->
+	<select id="queryByPage" parameterType="QueryUser" resultMap="usermap2">
+		<!-- 调用sql片段 -->
+		select * from (select rownum rn,t.*
+		from(
+		<include refid="selector" />
+		<include refid="where" />
+		<include refid="order" />
+		)t)t1
+		<include refid="page" />
+	</select>
+
+	<!-- sql片段 -->
+	<!-- 查什么 -->
+	<sql id="selector">
+		select * from tuser
+	</sql>
+	<!-- 查询条件 -->
+	<sql id="where">
+		<where>
+			<if test="username !=null and username!=''">
+				and username=#{username}
+			</if>
+			<if test="password !=null and password !=''">
+				and password=#{password}
+			</if>
+			<if test="isenabled !=0">
+				and isenabled=#{isenabled}
+			</if>
+		</where>
+	</sql>
+	<!-- 排序 -->
+	<sql id="order">
+		order by id desc
+	</sql>
+	<!-- 分页 大于号，小于号进行转译 大于号：&gt； 小于号：&lt； -->
+	<sql id="page">
+		<where>
+			<if test="start!=0">
+				and rn&gt;=#{start}
+			</if>
+			<if test="end!=0">
+				and rn&lt;=#{end}
+			</if>
+		</where>
+	</sql>
+	<!--resultMap:关联返回 -->
+	<select id="queryById" parameterType="int" resultMap="usermap">
+		select *
+		from tuser where id=#{id}
+	</select>
+	<!-- 批量删除 -->
+	<delete id="deleteById">
+		delete from tuser where id in
+		<foreach collection="array" item="id" separator="," open="(" close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<!-- 修改 -->
+	<update id="updateUser" parameterType="TUser">
+	update tuser
+		<set>
+			<trim suffixOverrides=",">
+				<if test="realname!=null and realname!=''">
+					realname=#{realname},
+				</if>
+				<if test="sex!=null and sex!=''">
+					sex=#{sex},
+				</if>
+				<if test="birthday!=null ">
+					birthday=#{birthday},
+				</if>
+				<if test="dept!=null ">
+					dept=#{dept.id},
+				</if>
+				<if test="isenabled!=0 ">
+					isenabled=#{isenabled},
+				</if>
+				<if test="email!=null and email!=''">
+					email=#{email},
+				</if>
+				<if test="password!=null and password!=''">
+					password=#{password},
+				</if>
+				<if test="updator!=0">
+					updator=#{updator},
+				</if>
+				<if test="pic!=null and pic!=''">
+					pic=#{pic},
+				</if>
+				
+				updatime=sysdate,
+			</trim>
+		</set>
+		where id= #{id}
+	</update>
+	<!--  新增  -->
+	<insert id="addUser" parameterType="TUser" >
+		<selectKey keyProperty="id" order="BEFORE" resultType="int">
+			select seq_tuser.nextval from dual
+		</selectKey>
+		insert into tuser(id,username,password,sex,birthday,email,dept,realname, creator, creatime,pic, isenabled )
+		values(#{id},#{username},#{password},#{sex},sysdate,#{email},#{dept.id},#{realname},#{creator},sysdate,#{pic},1)
+	</insert>
+	<!-- 删除一条 -->
+	<delete id="deleteUser">
+		delete from tuser where id=#{id}
+	</delete>
+	<!--  查询条数  -->
+	<select id="queryByCount" parameterType="QueryUser" resultType="int">
+		select count(1) from tuser
+		<include refid="where" />
+	</select>
+</mapper>
+
